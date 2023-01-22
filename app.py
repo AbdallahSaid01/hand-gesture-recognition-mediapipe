@@ -15,6 +15,7 @@ from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
 
+import socket
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -158,6 +159,18 @@ def main():
                 most_common_fg_id = Counter(
                     finger_gesture_history).most_common()
 
+                # Passing information to unity
+
+                gesture = keypoint_classifier_labels[hand_sign_id]
+                movement = point_history_classifier_labels[most_common_fg_id[0][0]]
+                gestureMovementCombo = gesture + ',' + movement
+
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                serverAddressPort = ("127.0.0.1", 4040)
+
+                sock.sendto(str.encode(str(gestureMovementCombo)), serverAddressPort)
+                print(gestureMovementCombo)
+
                 # Drawing part
                 debug_image = draw_bounding_rect(use_brect, debug_image, brect)
                 debug_image = draw_landmarks(debug_image, landmark_list)
@@ -165,8 +178,8 @@ def main():
                     debug_image,
                     brect,
                     handedness,
-                    keypoint_classifier_labels[hand_sign_id],
-                    point_history_classifier_labels[most_common_fg_id[0][0]],
+                    gesture,
+                    movement,
                 )
         else:
             point_history.append([0, 0])
